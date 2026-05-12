@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>ERP Farmacias SIMI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #005baa;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    main {
+      width: 90%;
+      max-width: 1000px;
+      margin: 30px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.12);
+    }
+
+    h2 {
+      color: #005baa;
+    }
+
+    form {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    input, textarea, button {
+      padding: 10px;
+      font-size: 15px;
+    }
+
+    button {
+      background: #005baa;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background: #003f7d;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #005baa;
+      color: white;
+    }
+
+    .mensaje {
+      margin-bottom: 15px;
+      font-weight: bold;
+      color: #005baa;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ERP Farmacias SIMI</h1>
+    <p>Gestion de productos e insumos farmaceuticos</p>
+  </header>
+
+  <main>
+    <h2>Registrar producto</h2>
+
+    <p id="mensaje" class="mensaje"></p>
+
+    <form id="productoForm">
+      <input type="text" id="nombre" placeholder="Nombre del producto" required>
+      <textarea id="descripcion" placeholder="Descripcion"></textarea>
+      <input type="number" id="precio" placeholder="Precio" required>
+      <input type="number" id="stock" placeholder="Stock" required>
+      <input type="text" id="categoria" placeholder="Categoria">
+      <button type="submit">Guardar producto</button>
+    </form>
+
+    <h2>Listado de productos</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Descripcion</th>
+          <th>Precio</th>
+          <th>Stock</th>
+          <th>Categoria</th>
+        </tr>
+      </thead>
+      <tbody id="tablaProductos"></tbody>
+    </table>
+  </main>
+
+  <script>
+    async function cargarProductos() {
+      try {
+        const respuesta = await fetch('/api/productos');
+        const productos = await respuesta.json();
+
+        const tabla = document.getElementById('tablaProductos');
+        tabla.innerHTML = '';
+
+        productos.forEach(function(producto) {
+          const fila = document.createElement('tr');
+
+          fila.innerHTML =
+            '<td>' + producto.id + '</td>' +
+            '<td>' + producto.nombre + '</td>' +
+            '<td>' + (producto.descripcion || '') + '</td>' +
+            '<td>$' + producto.precio + '</td>' +
+            '<td>' + producto.stock + '</td>' +
+            '<td>' + (producto.categoria || '') + '</td>';
+
+          tabla.appendChild(fila);
+        });
+      } catch (error) {
+        document.getElementById('mensaje').textContent = 'No se pudieron cargar los productos.';
+      }
+    }
+
+    document.getElementById('productoForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const producto = {
+        nombre: document.getElementById('nombre').value,
+        descripcion: document.getElementById('descripcion').value,
+        precio: document.getElementById('precio').value,
+        stock: document.getElementById('stock').value,
+        categoria: document.getElementById('categoria').value
+      };
+
+      try {
+        await fetch('/api/productos', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(producto)
+        });
+
+        document.getElementById('mensaje').textContent = 'Producto registrado correctamente.';
+        this.reset();
+        cargarProductos();
+      } catch (error) {
+        document.getElementById('mensaje').textContent = 'Error al registrar el producto.';
+      }
+    });
+
+    cargarProductos();
+  </script>
+</body>
+</html>
