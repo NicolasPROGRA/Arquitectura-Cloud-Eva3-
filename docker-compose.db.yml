@@ -1,0 +1,21 @@
+services:
+  db:
+    build: ./database
+    container_name: simi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: simi_erp
+      POSTGRES_USER: simi_user
+      POSTGRES_PASSWORD: simi_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - simi_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U simi_user -d simi_erp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  simi_pgdata:
