@@ -16,6 +16,20 @@
       color: white;
       padding: 20px;
       text-align: center;
+      position: relative;
+    }
+
+    .logout {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: white;
+      color: #005baa;
+      border: none;
+      padding: 9px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
     }
 
     main {
@@ -81,7 +95,8 @@
 <body>
   <header>
     <h1>ERP Farmacias SIMI</h1>
-    <p>Gestion de productos e insumos farmaceuticos</p>
+    <p>Gestión de productos e insumos farmacéuticos</p>
+    <button class="logout" onclick="cerrarSesion()">Cerrar sesión</button>
   </header>
 
   <main>
@@ -91,10 +106,10 @@
 
     <form id="productoForm">
       <input type="text" id="nombre" placeholder="Nombre del producto" required>
-      <textarea id="descripcion" placeholder="Descripcion"></textarea>
+      <textarea id="descripcion" placeholder="Descripción"></textarea>
       <input type="number" id="precio" placeholder="Precio" required>
       <input type="number" id="stock" placeholder="Stock" required>
-      <input type="text" id="categoria" placeholder="Categoria">
+      <input type="text" id="categoria" placeholder="Categoría">
       <button type="submit">Guardar producto</button>
     </form>
 
@@ -105,10 +120,10 @@
         <tr>
           <th>ID</th>
           <th>Nombre</th>
-          <th>Descripcion</th>
+          <th>Descripción</th>
           <th>Precio</th>
           <th>Stock</th>
-          <th>Categoria</th>
+          <th>Categoría</th>
         </tr>
       </thead>
       <tbody id="tablaProductos"></tbody>
@@ -119,6 +134,12 @@
     async function cargarProductos() {
       try {
         const respuesta = await fetch('/api/productos');
+
+        if (respuesta.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+
         const productos = await respuesta.json();
 
         const tabla = document.getElementById('tablaProductos');
@@ -154,13 +175,18 @@
       };
 
       try {
-        await fetch('/api/productos', {
+        const respuesta = await fetch('/api/productos', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(producto)
         });
+
+        if (respuesta.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
 
         document.getElementById('mensaje').textContent = 'Producto registrado correctamente.';
         this.reset();
@@ -169,6 +195,14 @@
         document.getElementById('mensaje').textContent = 'Error al registrar el producto.';
       }
     });
+
+    async function cerrarSesion() {
+      await fetch('/api/auth/logout', {
+        method: 'POST'
+      });
+
+      window.location.href = '/login';
+    }
 
     cargarProductos();
   </script>

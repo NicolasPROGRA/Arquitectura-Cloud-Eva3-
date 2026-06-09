@@ -1,13 +1,9 @@
 services:
   frontend:
     build: ./frontend
-    container_name: simi-frontend
+    container_name: simi-frontend-eva3
     restart: unless-stopped
     ports:
       - "80:3000"
-    environment:
-      DB_HOST: 172.31.83.96
-      DB_PORT: 5432
-      DB_NAME: simi_erp
-      DB_USER: simi_user
-      DB_PASSWORD: simi_pass
+    env_file:
+      - .env

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login Seguro - ERP SIMI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef3f8;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #005baa;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    main {
+      width: 90%;
+      max-width: 420px;
+      margin: 40px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    }
+
+    h2 {
+      color: #005baa;
+      text-align: center;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 11px;
+      margin-top: 10px;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #005baa;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #003f7d;
+    }
+
+    .mensaje {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #005baa;
+      text-align: center;
+    }
+
+    .error {
+      color: #b00020;
+    }
+
+    #mfaBox {
+      display: none;
+      margin-top: 20px;
+    }
+
+    #qr {
+      display: none;
+      max-width: 220px;
+      margin: 15px auto;
+    }
+
+    .ayuda {
+      font-size: 13px;
+      color: #444;
+      text-align: center;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ERP Farmacias SIMI</h1>
+    <p>Portal de autenticación segura</p>
+  </header>
+
+  <main>
+    <h2>Inicio de sesión</h2>
+
+    <div id="loginBox">
+      <input type="text" id="username" placeholder="Usuario">
+      <input type="password" id="password" placeholder="Contraseña">
+      <button onclick="login()">Continuar</button>
+    </div>
+
+    <div id="mfaBox">
+      <p class="ayuda" id="mfaTexto">
+        Ingrese el código de 6 dígitos generado por su aplicación autenticadora.
+      </p>
+
+      <img id="qr" src="" alt="Código QR MFA">
+
+      <input type="text" id="codigoMfa" placeholder="Código MFA de 6 dígitos">
+      <button onclick="verificarMfa()">Verificar MFA</button>
+    </div>
+
+    <p id="mensaje" class="mensaje"></p>
+  </main>
+
+  <script>
+    async function login() {
+      const mensaje = document.getElementById('mensaje');
+      mensaje.textContent = '';
+
+      const datos = {
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value
+      };
+
+      try {
+        const respuesta = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(datos)
+        });
+
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+          mensaje.textContent = resultado.error || 'Error de autenticación.';
+          mensaje.className = 'mensaje error';
+          return;
+        }
+
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('mfaBox').style.display = 'block';
+
+        if (resultado.configurarMfa && resultado.qrDataUrl) {
+          document.getElementById('qr').src = resultado.qrDataUrl;
+          document.getElementById('qr').style.display = 'block';
+          document.getElementById('mfaTexto').textContent =
+            'Primer ingreso: escanee este QR con Google Authenticator o Microsoft Authenticator. Luego ingrese el código de 6 dígitos.';
+        }
+
+        mensaje.textContent = resultado.mensaje || 'Ingrese código MFA.';
+        mensaje.className = 'mensaje';
+
+      } catch (error) {
+        mensaje.textContent = 'No se pudo conectar con el servidor.';
+        mensaje.className = 'mensaje error';
+      }
+    }
+
+    async function verificarMfa() {
+      const mensaje = document.getElementById('mensaje');
+
+      const datos = {
+        codigo: document.getElementById('codigoMfa').value
+      };
+
+      try {
+        const respuesta = await fetch('/api/auth/mfa/verify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(datos)
+        });
+
+        const resultado = await respuesta.json();
+
+        if (!respuesta.ok) {
+          mensaje.textContent = resultado.error || 'Código MFA incorrecto.';
+          mensaje.className = 'mensaje error';
+          return;
+        }
+
+        mensaje.textContent = 'Acceso autorizado. Redirigiendo al ERP...';
+        mensaje.className = 'mensaje';
+
+        setTimeout(function() {
+          window.location.href = '/index.html';
+        }, 1000);
+
+      } catch (error) {
+        mensaje.textContent = 'Error validando MFA.';
+        mensaje.className = 'mensaje error';
+      }
+    }
+  </script>
+</body>
+</html>
